@@ -12,7 +12,6 @@ defmodule Bamboo.SendGridHelper do
 
   alias Bamboo.Email
 
-  @id_size 36
   @field_name :send_grid_template
   @categories :categories
 
@@ -26,16 +25,10 @@ defmodule Bamboo.SendGridHelper do
       |> with_template("80509523-83de-42b6-a2bf-54b7513bd2aa")
   """
   def with_template(email, template_id) do
-    if byte_size(template_id) == @id_size do
-      template = Map.get(email.private, @field_name, %{})
+    template = Map.get(email.private, @field_name, %{})
 
-      email
-      |> Email.put_private(@field_name, set_template(template, template_id))
-    else
-      raise "expected the template_id parameter to be a UUID 36 characters long, got #{
-              template_id
-            }"
-    end
+    email
+    |> Email.put_private(@field_name, set_template(template, template_id))
   end
 
   @doc """
@@ -61,8 +54,25 @@ defmodule Bamboo.SendGridHelper do
   end
 
   @doc """
+  Add dynamic data to be replaced in the Dynamic SendGrid template.
+
+  The key will replace anything with the same key name in handlebars
+
+  ## Example
+
+      email
+      |> dynamic_data("body", "<h1>Wow such body</h1>")
+  """
+  def dynamic_data(email, key, value) do
+    template = Map.get(email.private, @field_name, %{})
+
+    email
+    |> Email.put_private(@field_name, add_dynamic_data(template, key, value))
+  end
+
+  @doc """
   An array of category names for this email. A maximum of 10 categories can be assigned to an email.
-  Duplicate categories will be ignored and only unique entries will be sent. 
+  Duplicate categories will be ignored and only unique entries will be sent.
 
   ## Example
 
@@ -92,6 +102,13 @@ defmodule Bamboo.SendGridHelper do
     template
     |> Map.update(:substitutions, %{tag => value}, fn substitutions ->
       Map.merge(substitutions, %{tag => value})
+    end)
+  end
+
+  defp add_dynamic_data(template, key, value) do
+    template
+    |> Map.update(:dynamic_data, %{key => value}, fn dynamic_data ->
+      Map.merge(dynamic_data, %{key => value})
     end)
   end
 end

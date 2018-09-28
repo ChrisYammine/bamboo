@@ -198,6 +198,25 @@ defmodule Bamboo.SendGridAdapterTest do
     assert personalization["substitutions"] == %{"%foo%" => "bar"}
   end
 
+  test "deliver/2 correctly handles dynamic templates" do
+    email =
+      new_email(
+        from: {"From", "from@foo.com"},
+        subject: "My Subject"
+      )
+
+    email
+    |> Bamboo.SendGridHelper.with_template("d-a4ca8ac932944eaf8edc335935192b8d")
+    |> Bamboo.SendGridHelper.dynamic_data("foo", "bar")
+    |> SendGridAdapter.deliver(@config)
+
+    assert_receive {:fake_sendgrid, %{params: params}}
+    personalization = List.first(params["personalizations"])
+    refute Map.has_key?(params, "content")
+    assert params["template_id"] == "d-a4ca8ac932944eaf8edc335935192b8d"
+    assert personalization["dynamic_template_data"] == %{"foo" => "bar"}
+  end
+
   test "deliver/2 doesn't force a subject" do
     email = new_email(from: {"From", "from@foo.com"})
 

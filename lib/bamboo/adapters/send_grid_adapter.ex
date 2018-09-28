@@ -188,6 +188,12 @@ defmodule Bamboo.SendGridAdapter do
   defp put_template_id(body, _), do: body
 
   defp put_template_substitutions(body, %Email{
+         private: %{send_grid_template: %{dynamic_data: dynamic_data}}
+       }) do
+    Map.put(body, :dynamic_template_data, dynamic_data)
+  end
+
+  defp put_template_substitutions(body, %Email{
          private: %{send_grid_template: %{substitutions: substitutions}}
        }) do
     Map.put(body, :substitutions, substitutions)
