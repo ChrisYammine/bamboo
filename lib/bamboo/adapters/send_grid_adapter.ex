@@ -121,6 +121,7 @@ defmodule Bamboo.SendGridAdapter do
     |> put_bcc(email)
     |> put_custom_args(email)
     |> put_template_substitutions(email)
+    |> put_subject(email)
   end
 
   defp put_to(body, %Email{to: to}) do
